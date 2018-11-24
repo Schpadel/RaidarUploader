@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
+import java.util.Scanner;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -51,6 +52,8 @@ public class RaidarMain {
 																									// Datum als
 																									// Dateiname
 																									// überschrieben!
+		
+		Scanner input = new Scanner(System.in);
 
 		BossNamen[1] = "Vale Guardian";
 		BossNamen[2] = "Gorseval the Multifarious";
@@ -129,11 +132,14 @@ public class RaidarMain {
 			}
 
 		}
-
-		String username = "Schpadel";
-		String password = "Apfelbaum123";
+		
+		
+		System.out.println("Bitte Raidar User eingeben: ");
+		String username = input.nextLine();
+		System.out.println("Bitte Passwort eingeben: ");
+		String password = input.nextLine();
 		String url = "https://www.gw2raidar.com/api/v2/token";
-		String[] command = { "curl", "-F", "\"username=Schpadel\"", "-F", "\"password=Apfelbaum123\"","https://www.gw2raidar.com/api/v2/token" };
+		String[] command = { "curl", "-F", "\"username=" + username + "\"", "-F", "\"password=" + password + "\"","https://www.gw2raidar.com/api/v2/token" };
 		System.out.print("Running Curl with command: ");
 		for (String e : command) {
 			System.out.print(e);
