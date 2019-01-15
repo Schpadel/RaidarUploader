@@ -16,20 +16,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Date;
-import java.util.List;
 import java.util.Scanner;
-
-import javax.net.ssl.HttpsURLConnection;
-
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.omg.CORBA.NameValuePair;
 
 public class RaidarMain {
 
@@ -41,11 +29,12 @@ public class RaidarMain {
 		File[] paths = new File[1];
 		String BossNameAlt;
 		String BossNameNeu;
-		String[] BossNamen = new String[17];
+		String[] BossNamen = new String[18];
 		String PfadDerNeustenDatei;
 		int boss;
+		File[] recentPath = new File[17];
+		int nzaehler = 0;
 		String token = "";
-		String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:63.0) Gecko/20100101 Firefox/63.0";
 		String neustesDatum;
 		Path target = Paths.get("C:\\Users\\Patrick\\Desktop\\Raidar Neuste Dateien\\Test.evtc"); // Platzhalter wird
 																									// später mit dem
@@ -78,7 +67,7 @@ public class RaidarMain {
 		BossNameNeu = BossNamen[1];
 
 		boss = 1;
-		while (boss < 16) {
+		while (boss <= 16) {
 
 			path = path.replaceAll(BossNameAlt, BossNameNeu);
 			System.out.println(path);
@@ -117,6 +106,8 @@ public class RaidarMain {
 			for (File i : paths) {
 				if (sdf.format(i.lastModified()).equals(neustesDatum)) {
 					PfadDerNeustenDatei = i.getAbsolutePath();
+					recentPath[nzaehler] = i;
+					nzaehler++;
 					String date = sdf.format(i.lastModified());
 					date = date.replace("/", "");
 					date = date.replaceAll(":", "");
@@ -125,7 +116,9 @@ public class RaidarMain {
 					target = Paths.get(newTarget);
 					Files.copy(i.toPath(), target, StandardCopyOption.REPLACE_EXISTING); // Test Dateien auf Desktop
 																							// kopieren
+					
 					System.out.println(PfadDerNeustenDatei);
+					
 					System.out.println("IT WORKS");
 
 				}
@@ -133,12 +126,29 @@ public class RaidarMain {
 
 		}
 		
-		
 		System.out.println("Bitte Raidar User eingeben: ");
 		String username = input.nextLine();
 		System.out.println("Bitte Passwort eingeben: ");
 		String password = input.nextLine();
-		String url = "https://www.gw2raidar.com/api/v2/token";
+		token = getRaidarToken(username, password);
+
+		input.close();
+		
+		
+		for(File x : recentPath) {
+			try {
+				if (x !=null) {
+				DateienUploaden(x , token, username , password);
+			}
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			}
+		}
+
+
+	public static String getRaidarToken(String username, String password) {
+		String token = "";
 		String[] command = { "curl", "-F", "\"username=" + username + "\"", "-F", "\"password=" + password + "\"","https://www.gw2raidar.com/api/v2/token" };
 		System.out.print("Running Curl with command: ");
 		for (String e : command) {
@@ -167,7 +177,42 @@ public class RaidarMain {
 			e.printStackTrace();
 		}
 		System.out.println("Der abgerufenen Token ist: " + token);
-
-	
+		return token;
 	}
-}
+	
+
+	private static void DateienUploaden(File path, String token, String username, String password) throws InterruptedException, IOException {  
+		
+		// String[] command = {"CMD", "/C", "curl" , "-F " + " \"username=" + username + "\"" + "-F " + "\"password=" + password + "\"" + " -F " + "\"file=@" + path.getAbsolutePath() + "\"" + " https://www.gw2raidar.com/api/upload.json" + "--progress-bar >> \"C:\\Users\\Patrick\\Documents\\Guild Wars 2\\addons\\arcdps\\arcdps.cbtlogshttp\""};
+		   
+		String[] command = {"CMD", "/C", "curl -F \"username=" + username + "\" -F \"password=" + password + "\" -F \"file=@" + path.getAbsolutePath() + "\"  https://www.gw2raidar.com/api/upload.json --progress-bar >> \"C:\\Users\\Patrick\\Documents\\Guild Wars 2\\addons\\arcdps\\arcdps.cbtlogshttp\""};
+	        ProcessBuilder probuilder = new ProcessBuilder( command );
+
+	        //Set up your work directory
+	        // probuilder.directory(new File("c:\\Test"));
+	        
+	        Process process = probuilder.start();
+	        
+	        //Read out dir output
+	        java.io.InputStream is = process.getErrorStream();  // Komischerweise liefert der Error Stream die Upload Statistik
+	        InputStreamReader isr = new InputStreamReader(is);
+	        BufferedReader br = new BufferedReader(isr);
+	        String line;
+	        System.out.printf("Output of running %s is:\n",
+	                Arrays.toString(command));
+	        while ((line = br.readLine()) != null) {
+	            System.out.println(line);
+	        }
+	        
+	        
+	        //Wait to get exit value
+	        try {
+	            int exitValue = process.waitFor();
+	            if (exitValue == 0) {
+	            	System.out.println("\n\nLog wurde erfolgreich hochgeladen!");
+	            }
+	        } catch (InterruptedException e) {
+	            e.printStackTrace();
+	        }
+	    }
+	}
