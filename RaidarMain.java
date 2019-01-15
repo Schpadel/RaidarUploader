@@ -41,7 +41,7 @@ public class RaidarMain {
 																									// Datum als
 																									// Dateiname
 																									// überschrieben!
-		
+
 		Scanner input = new Scanner(System.in);
 
 		BossNamen[1] = "Vale Guardian";
@@ -62,7 +62,8 @@ public class RaidarMain {
 		BossNamen[16] = "Qadim";
 
 		// Initialisierung
-		path = "C:\\Users\\Patrick\\Documents\\Guild Wars 2\\addons\\arcdps\\arcdps.cbtlogs\\Vale Guardian";
+		String winUsername = System.getProperty("user.name"); // get Windows user name for Log Path
+		path = "C:\\Users\\" + winUsername + "\\Documents\\Guild Wars 2\\addons\\arcdps\\arcdps.cbtlogs\\Vale Guardian";
 		BossNameAlt = BossNamen[1];
 		BossNameNeu = BossNamen[1];
 
@@ -114,18 +115,17 @@ public class RaidarMain {
 					System.out.println(date);
 					String newTarget = "C:\\Users\\Patrick\\Desktop\\Raidar Neuste Dateien\\Test" + date + ".evtc";
 					target = Paths.get(newTarget);
-					Files.copy(i.toPath(), target, StandardCopyOption.REPLACE_EXISTING); // Test Dateien auf Desktop
-																							// kopieren
-					
+					// Files.copy(i.toPath(), target, StandardCopyOption.REPLACE_EXISTING); // Test: Dateien auf Desktop kopieren
+
 					System.out.println(PfadDerNeustenDatei);
-					
+
 					System.out.println("IT WORKS");
 
 				}
 			}
 
 		}
-		
+
 		System.out.println("Bitte Raidar User eingeben: ");
 		String username = input.nextLine();
 		System.out.println("Bitte Passwort eingeben: ");
@@ -133,23 +133,22 @@ public class RaidarMain {
 		token = getRaidarToken(username, password);
 
 		input.close();
-		
-		
-		for(File x : recentPath) {
+
+		for (File x : recentPath) {
 			try {
-				if (x !=null) {
-				DateienUploaden(x , token, username , password);
-			}
+				if (x != null) {
+					DateienUploaden(x, token, username, password);
+				}
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
-			}
 		}
-
+	}
 
 	public static String getRaidarToken(String username, String password) {
 		String token = "";
-		String[] command = { "curl", "-F", "\"username=" + username + "\"", "-F", "\"password=" + password + "\"","https://www.gw2raidar.com/api/v2/token" };
+		String[] command = { "curl", "-F", "\"username=" + username + "\"", "-F", "\"password=" + password + "\"",
+				"https://www.gw2raidar.com/api/v2/token" };
 		System.out.print("Running Curl with command: ");
 		for (String e : command) {
 			System.out.print(e);
@@ -179,40 +178,39 @@ public class RaidarMain {
 		System.out.println("Der abgerufenen Token ist: " + token);
 		return token;
 	}
-	
 
-	private static void DateienUploaden(File path, String token, String username, String password) throws InterruptedException, IOException {  
+	private static void DateienUploaden(File path, String token, String username, String password)
+			throws InterruptedException, IOException {
+
+		String[] command = { "CMD", "/C", "curl -F \"username=" + username + "\" -F \"password=" + password
+				+ "\" -F \"file=@" + path.getAbsolutePath()
+				+ "\"  https://www.gw2raidar.com/api/upload.json --progress-bar >> \"C:\\Users\\Patrick\\Documents\\Guild Wars 2\\addons\\arcdps\\arcdps.cbtlogshttp\"" };
 		
-		// String[] command = {"CMD", "/C", "curl" , "-F " + " \"username=" + username + "\"" + "-F " + "\"password=" + password + "\"" + " -F " + "\"file=@" + path.getAbsolutePath() + "\"" + " https://www.gw2raidar.com/api/upload.json" + "--progress-bar >> \"C:\\Users\\Patrick\\Documents\\Guild Wars 2\\addons\\arcdps\\arcdps.cbtlogshttp\""};
-		   
-		String[] command = {"CMD", "/C", "curl -F \"username=" + username + "\" -F \"password=" + password + "\" -F \"file=@" + path.getAbsolutePath() + "\"  https://www.gw2raidar.com/api/upload.json --progress-bar >> \"C:\\Users\\Patrick\\Documents\\Guild Wars 2\\addons\\arcdps\\arcdps.cbtlogshttp\""};
-	        ProcessBuilder probuilder = new ProcessBuilder( command );
+		
+		ProcessBuilder probuilder = new ProcessBuilder(command);
+		// Set up your work directory
+		// probuilder.directory(new File("c:\\Test"));
 
-	        //Set up your work directory
-	        // probuilder.directory(new File("c:\\Test"));
-	        
-	        Process process = probuilder.start();
-	        
-	        //Read out dir output
-	        java.io.InputStream is = process.getErrorStream();  // Komischerweise liefert der Error Stream die Upload Statistik
-	        InputStreamReader isr = new InputStreamReader(is);
-	        BufferedReader br = new BufferedReader(isr);
-	        String line;
-	        System.out.printf("Output of running %s is:\n",
-	                Arrays.toString(command));
-	        while ((line = br.readLine()) != null) {
-	            System.out.println(line);
-	        }
-	        
-	        
-	        //Wait to get exit value
-	        try {
-	            int exitValue = process.waitFor();
-	            if (exitValue == 0) {
-	            	System.out.println("\n\nLog wurde erfolgreich hochgeladen!");
-	            }
-	        } catch (InterruptedException e) {
-	            e.printStackTrace();
-	        }
-	    }
+		Process process = probuilder.start();
+
+		// Read out dir output
+		java.io.InputStream is = process.getErrorStream(); // Komischerweise liefert der Error Stream die Upload Statistik
+		InputStreamReader isr = new InputStreamReader(is);
+		BufferedReader br = new BufferedReader(isr);
+		String line;
+		System.out.printf("Output of running %s is:\n", Arrays.toString(command));
+		while ((line = br.readLine()) != null) {
+			System.out.println(line);
+		}
+
+		// Wait to get exit value
+		try {
+			int exitValue = process.waitFor();
+			if (exitValue == 0) {
+				System.out.println("\n\nLog wurde erfolgreich hochgeladen!\n\n");
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
+}
